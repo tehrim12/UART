@@ -72,3 +72,4 @@ module uart_tx #(parameter width = 8)(
         endcase
     end
 endmodule
+ 

@@ -1,3 +1,4 @@
+
 module baud #(parameter clk_freq=5000000,baud_rate=2400)(
 	input sys_clk,
 	input sys_rst,
