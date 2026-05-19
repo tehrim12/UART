@@ -1,6 +1,6 @@
 
-module u_xmit #(parameter width = 8)(
-    input                   uart_clk,
+module uart_tx #(parameter width = 8)(
+    input                   baud_op_clk,
     input                   sys_rst,
     input                   xmit_h,
     input  [width-1:0]      xmit_data_h,
@@ -19,7 +19,7 @@ module u_xmit #(parameter width = 8)(
     reg [width-1:0]       latched_data;
     reg                   out;
  
-    always @(posedge uart_clk or negedge sys_rst) begin
+    always @(posedge baud_op_clk or negedge sys_rst) begin
         if (!sys_rst) begin
             ct               <= idle;
             count            <= 0;
@@ -44,7 +44,7 @@ module u_xmit #(parameter width = 8)(
             else if (ct == data && count == 15 && nt == data)
                                   index <= index + 1;
  
-            // FIX: level signal - set at stop->idle, clear when new TX starts
+            
             if (ct == stop && nt == idle)
                 xmit_done_h <= 1'b1;
             else if (ct == idle && xmit_h)
