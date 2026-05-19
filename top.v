@@ -1,91 +1,21 @@
-`timescale 1ns / 1ns
-module tb_uart;
- 
-    parameter freq  = 100_000_000;   // matches always #5 below
-    parameter baudr = 3_125_000;
-    parameter width = 8;
- 
-    reg              sys_clk;
-    reg              sys_rst;
-    reg              xmit_h;
-    reg  [width-1:0] xmit_data_h;
- 
-    wire             uart_clk;
-    wire             uart_xmit_data_h;
-    wire             xmit_done_h;
-    wire [width-1:0] rec_data_h;
-    wire             rec_ready;
-    wire             rec_busy;
-    wire             xmit_active;
- 
-    uart #(.freq(freq), .baudr(baudr), .width(width)) DUT (
-        .sys_clk         (sys_clk),
-        .sys_rst         (sys_rst),
-        .xmit_h          (xmit_h),
-        .xmit_data_h     (xmit_data_h),
-        .uart_rec_data_h (uart_xmit_data_h),
-        .uart_clk        (uart_clk),
-        .uart_xmit_data_h(uart_xmit_data_h),
-        .xmit_done_h     (xmit_done_h),
-        .rec_data_h      (rec_data_h),
-        .rec_ready       (rec_ready),
-        .rec_busy        (rec_busy),
-        .xmit_active     (xmit_active)
-    );
- 
-    initial sys_clk = 0;
-    always  #5 sys_clk = ~sys_clk;
- 
-    initial begin
-        sys_rst     = 0;
-        xmit_h      = 0;
-        xmit_data_h = 0;
-        #100;
-        sys_rst = 1;
-        #50;
- 
-        // ---- Transmission 1: 0xA5 ----
-        @(posedge uart_clk);
-        xmit_data_h = 8'hA5;
-        xmit_h      = 1;
-        @(posedge uart_clk);
-        xmit_h      = 0;
-        wait(xmit_done_h);
-        @(posedge uart_clk);
-        $display("--------------------------------");
-        $display("TRANSMITTED DATA = %h", 8'hA5);
-        $display("RECEIVED DATA    = %h", rec_data_h);
-        $display("--------------------------------");
- 
-        repeat(20) @(posedge uart_clk);
- 
-        // ---- Transmission 2: 0x3C ----
-        @(posedge uart_clk);
-        xmit_data_h = 8'h3C;
-        xmit_h      = 1;
-        @(posedge uart_clk);
-        xmit_h      = 0;
-        wait(xmit_done_h);
-        @(posedge uart_clk);
-        $display("--------------------------------");
-        $display("TRANSMITTED DATA = %h", 8'h3C);
-        $display("RECEIVED DATA    = %h", rec_data_h);
-        $display("--------------------------------");
- 
-        repeat(20) @(posedge uart_clk);
-        $finish;
-    end
- 
-    // Watchdog
-    initial begin
-        #10_000_000;
-        $display("TIMEOUT");
-        $finish;
-    end
- 
-    initial begin
-        $monitor("TIME=%0t uart_tx=%b busy=%b ready=%b tx_done=%b rec_data=%h",
-                  $time, uart_xmit_data_h, rec_busy, rec_ready, xmit_done_h, rec_data_h);
-    end
- 
+module uart #(parameter clk_freq=50000000,baud_rate=2400,width=8)(
+input sys_clk,
+input sys_rst,
+input xmit_h,
+input [width-1:0] xmit_data_h,
+input uart_rec_data_h,
+output baud_op_clk,
+output uart_xmit_data_h,
+output xmit_done_h,
+output [width-1:0] rec_data_h,
+output rec_ready,
+output rec_busy,
+output xmit_active
+);
+
+
+
+baud #(.clk_freq(clk_freq),.baud_rate(baud_rate)) b1 (.sys_clk(sys_clk),.sys_rst(sys_rst),.baud_op_clk(baud_op_clk));
+uart_tx #(.width(width)) b2(.baud_op_clk(baud_op_clk),.sys_rst(sys_rst),.xmit_h(xmit_h),.xmit_data_h(xmit_data_h),.xmit_active(xmit_active),.xmit_done_h(xmit_done_h),.uart_xmit_data_h(uart_xmit_data_h));
+uart_rx #(.width(width)) b3(.baud_op_clk(baud_op_clk),.sys_rst(sys_rst),.uart_rec_data_h(uart_rec_data_h),.rec_ready(rec_ready),.rec_busy(rec_busy),.rec_data_h(rec_data_h));
 endmodule
