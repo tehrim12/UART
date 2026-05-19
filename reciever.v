@@ -46,7 +46,7 @@ module uart_rx #(parameter width = 8)(
             else
                 count <= count + 1;
 
-            if (ct == data && count == 7)
+            if (ct == data && count == 4)
                 rec_data_h <= {rx2, rec_data_h[width-1:1]};
 
             if (ct == idle)
